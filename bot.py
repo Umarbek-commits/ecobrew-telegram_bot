@@ -18,7 +18,7 @@ from telegram.ext import (
 
 # ================= НАСТРОЙКИ =================
 BOT_TOKEN = os.getenv("BOT_TOKEN")          # Токен берётся из Railway
-BENEFICIARY_CHAT_ID = 123456789             # <-- ВСТАВЬ СВОЙ TELEGRAM ID
+BENEFICIARY_CHAT_ID = 5284035173             # <-- ВСТАВЬ СВОЙ TELEGRAM ID
 # ============================================
 
 logging.basicConfig(level=logging.INFO)
@@ -116,3 +116,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
