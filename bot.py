@@ -12,7 +12,7 @@ from telegram.ext import (
 
 # ================== НАСТРОЙКИ ==================
 BOT_TOKEN = os.getenv("BOT_TOKEN")  # Railway возьмёт токен отсюда
-BENEFICIARY_CHAT_ID = 6885214664     # <-- ВСТАВЬ СВОЙ РЕАЛЬНЫЙ TELEGRAM ID
+BENEFICIARY_CHAT_ID = 5284035173     # <-- ВСТАВЬ СВОЙ РЕАЛЬНЫЙ TELEGRAM ID
 # ===============================================
 
 logging.basicConfig(level=logging.INFO)
