@@ -11,7 +11,7 @@ from telegram.ext import (
 )
 
 # ================== НАСТРОЙКИ ==================
-BOT_TOKEN = os.getenv("8207197567:AAGOXdkY6UxZmYcp3a7We-HfdLAO3TFUKtI")  # Railway возьмёт токен отсюда
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # Railway возьмёт токен отсюда
 BENEFICIARY_CHAT_ID = 5284035173     # <-- ВСТАВЬ СВОЙ РЕАЛЬНЫЙ TELEGRAM ID
 # ===============================================
 
@@ -88,3 +88,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
