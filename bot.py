@@ -2,62 +2,62 @@ import logging
 import os
 from telegram import (
     Update,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
     ReplyKeyboardMarkup,
-    KeyboardButton
+    KeyboardButton,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton
 )
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
-    CallbackQueryHandler,
     MessageHandler,
+    CallbackQueryHandler,
     ContextTypes,
     filters
 )
 
-# ================= НАСТРОЙКИ =================
-BOT_TOKEN = os.getenv("BOT_TOKEN")          # Токен берётся из Railway
-BENEFICIARY_CHAT_ID = 5284035173             # <-- ВСТАВЬ СВОЙ TELEGRAM ID
-# ============================================
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+BENEFICIARY_CHAT_ID = 5284035173  # <-- ТВОЙ ID
 
 logging.basicConfig(level=logging.INFO)
 
-WAIT_LOCATION = 1
+WAIT_COFFEE = 1
+WAIT_LOCATION = 2
+
+
+def main_keyboard():
+    return ReplyKeyboardMarkup(
+        [
+            ["☕ Есть кофейный жмых"],
+            [KeyboardButton("📍 Отправить геолокацию", request_location=True)]
+        ],
+        resize_keyboard=True
+    )
 
 
 # ---------- /start ----------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [
-        [InlineKeyboardButton("☕ Есть кофейный жмых", callback_data="coffee")]
-    ]
+    context.user_data["state"] = WAIT_COFFEE
     await update.message.reply_text(
-        "Нажмите кнопку ниже 👇",
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        "Нажмите кнопку ☕, затем отправьте геолокацию 📍",
+        reply_markup=main_keyboard()
     )
 
 
-# ---------- Нажатие «Есть кофейный жмых» ----------
-async def coffee_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
+# ---------- ТЕКСТОВЫЕ КНОПКИ ----------
+async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    state = context.user_data.get("state")
 
-    context.user_data.clear()
-    context.user_data["state"] = WAIT_LOCATION
-
-    location_keyboard = ReplyKeyboardMarkup(
-        [[KeyboardButton("📍 Отправить геолокацию", request_location=True)]],
-        resize_keyboard=True,
-        one_time_keyboard=True
-    )
-
-    await query.message.reply_text(
-        "Отправьте геолокацию кофейни 📍",
-        reply_markup=location_keyboard
-    )
+    if text == "☕ Есть кофейный жмых" and state == WAIT_COFFEE:
+        context.user_data["state"] = WAIT_LOCATION
+        await update.message.reply_text(
+            "Теперь нажмите 📍 Отправить геолокацию",
+            reply_markup=main_keyboard()
+        )
 
 
-# ---------- Приём геолокации ----------
+# ---------- ГЕОЛОКАЦИЯ ----------
 async def location_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get("state") != WAIT_LOCATION:
         return
@@ -68,7 +68,6 @@ async def location_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     maps_link = f"https://maps.google.com/?q={lat},{lon}"
 
-    # Кнопка «Забрал» для бенефициара
     beneficiary_keyboard = InlineKeyboardMarkup(
         [[InlineKeyboardButton("✅ Забрал", callback_data="picked")]]
     )
@@ -79,7 +78,6 @@ async def location_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=beneficiary_keyboard
     )
 
-    # Убираем кнопку геолокации у кофейни
     await update.message.reply_text(
         "✅ Заявка отправлена",
         reply_markup=ReplyKeyboardMarkup([], remove_keyboard=True)
@@ -88,7 +86,7 @@ async def location_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
 
 
-# ---------- Кнопка «Забрал» ----------
+# ---------- «ЗАБРАЛ» ----------
 async def picked_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -99,21 +97,20 @@ async def picked_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-def main():
-    if not BOT_TOKEN:
-        raise RuntimeError("❌ BOT_TOKEN не найден")
-
+def setup_app():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(coffee_button, pattern="^coffee$"))
+    app.add_handler(MessageHandler(filters.TEXT, text_handler))
     app.add_handler(MessageHandler(filters.LOCATION, location_handler))
     app.add_handler(CallbackQueryHandler(picked_handler, pattern="^picked$"))
 
-    print("🤖 EcoBrew Bot запущен (геолокация + забрал)")
-    app.run_polling()
+    print("🤖 EcoBrew Bot (две кнопки снизу)")
+    return app
 
 
 if __name__ == "__main__":
-    main()
+    if not BOT_TOKEN:
+        raise RuntimeError("BOT_TOKEN не найден")
 
+    setup_app().run_polling()
